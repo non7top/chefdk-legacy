@@ -1,0 +1,97 @@
+name: Build ChefDK Images
+
+on:
+  push:
+    branches: [master]
+    tags: ["v*"]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_BASE: ghcr.io/${{ github.repository_owner }}/chefdk
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      id-token: write  # required for cosign keyless signing
+
+    strategy:
+      matrix:
+        include:
+          - el: "6"
+            dockerfile: Dockerfile.el6
+            rpm: chefdk-1.6.1-1.el6.x86_64.rpm
+          - el: "7"
+            dockerfile: Dockerfile.el7
+            rpm: chefdk-1.6.1-1.el7.x86_64.rpm
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tags
+        id: meta
+        run: |
+          BASE="${{ env.IMAGE_BASE }}"
+          EL="el${{ matrix.el }}"
+          echo "tags=${BASE}:${EL},${BASE}:1.6.1-${EL}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign image (keyless)
+        run: |
+          cosign sign --yes \
+            "${{ env.IMAGE_BASE }}@${{ steps.build.outputs.digest }}"
+
+      - name: Upload RPM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.rpm }}
+          path: ${{ matrix.rpm }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate checksums
+        run: |
+          sha256sum chefdk-1.6.1-1.el6.x86_64.rpm \
+                    chefdk-1.6.1-1.el7.x86_64.rpm \
+            > SHA256SUMS
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            chefdk-1.6.1-1.el6.x86_64.rpm
+            chefdk-1.6.1-1.el7.x86_64.rpm
+            SHA256SUMS
+          generate_release_notes: true
