@@ -8,16 +8,29 @@ Images are published to the GitHub Container Registry and signed with [Sigstore/
 
 | Tag | Base OS | Notes |
 |-----|---------|-------|
-| `latest`, `el7`, `1.6.1-el7`, `el7-<sha>` | CentOS 7 | Recommended |
-| `el6`, `1.6.1-el6`, `el6-<sha>` | CentOS 6 | Legacy |
+| `latest`, `el7`, `1.6.1-el7`, `1.6.1-rN`, `1.6.1-rN-el7`, `el7-<sha>` | CentOS 7 | Recommended |
+| `el6`, `1.6.1-el6`, `1.6.1-rN-el6`, `el6-<sha>` | CentOS 6 | Legacy |
 
+```bash
+# Always latest build
+docker pull ghcr.io/non7top/chefdk:latest
+docker pull ghcr.io/non7top/chefdk:el7
+docker pull ghcr.io/non7top/chefdk:el6
+
+# Pinned to a specific build revision
+docker pull ghcr.io/non7top/chefdk:1.6.1-r5
+docker pull ghcr.io/non7top/chefdk:1.6.1-r5-el6
+
+# Pinned to a specific git commit
+docker pull ghcr.io/non7top/chefdk:el7-abc1234
+docker pull ghcr.io/non7top/chefdk:el6-abc1234
 ```
-ghcr.io/non7top/chefdk:latest
-ghcr.io/non7top/chefdk:el7
-ghcr.io/non7top/chefdk:el6
-ghcr.io/non7top/chefdk:el7-abc1234    # short git SHA (el7)
-ghcr.io/non7top/chefdk:el6-abc1234    # short git SHA (el6)
-```
+
+RPM packages are sourced from the Chef package repository:
+- https://packages.chef.io/files/stable/chefdk/1.6.1/el/7/
+- https://packages.chef.io/files/stable/chefdk/1.6.1/el/6/
+
+The RPMs and their checksums are also published on the [Releases page](https://github.com/non7top/chefdk-legacy/releases).
 
 ## Included versions
 
