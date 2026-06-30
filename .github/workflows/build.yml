@@ -3,7 +3,6 @@ name: Build ChefDK Images
 on:
   push:
     branches: [master]
-    tags: ["v*"]
   pull_request:
     branches: [master]
   workflow_dispatch:
@@ -52,9 +51,10 @@ jobs:
           BASE="${{ env.IMAGE_BASE }}"
           EL="el${{ matrix.el }}"
           SHA="${GITHUB_SHA::7}"
-          TAGS="${BASE}:${EL},${BASE}:1.6.1-${EL},${BASE}:${EL}-${SHA}"
+          REV="r${{ github.run_number }}"
+          TAGS="${BASE}:${EL},${BASE}:1.6.1-${EL},${BASE}:${EL}-${SHA},${BASE}:1.6.1-${REV}-${EL}"
           if [ "${{ matrix.el }}" = "7" ]; then
-            TAGS="${TAGS},${BASE}:latest"
+            TAGS="${TAGS},${BASE}:latest,${BASE}:1.6.1-${REV}"
           fi
           echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
 
@@ -95,7 +95,7 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.ref == 'refs/heads/master'
     permissions:
       contents: write
       id-token: write
@@ -125,6 +125,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
+          tag_name: v1.6.1-r${{ github.run_number }}
+          name: ChefDK 1.6.1-r${{ github.run_number }}
           files: |
             chefdk-1.6.1-1.el6.x86_64.rpm
             chefdk-1.6.1-1.el7.x86_64.rpm
