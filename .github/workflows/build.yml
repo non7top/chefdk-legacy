@@ -31,14 +31,14 @@ jobs:
             rpm: chefdk-1.6.1-1.el7.x86_64.rpm
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Log in to GitHub Container Registry
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -53,35 +53,40 @@ jobs:
 
       - name: Build (and push on merge)
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ matrix.dockerfile }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
 
-      - name: Install cosign
+      # cosign v2.x produces sha256-<digest>.sig tag consumed by Kyverno and
+      # other tools that don't yet discover OCI 1.1 referrers.
+      - name: Install cosign v2 (legacy .sig tag)
         if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@v3
+        uses: sigstore/cosign-installer@v4.1.2
+        with:
+          cosign-release: v2.4.1
 
-      # New: OCI Referrers API (registries that support OCI 1.1)
+      - name: Sign image (legacy .sig tag)
+        if: github.event_name != 'pull_request'
+        run: |
+          cosign sign --yes \
+            "${{ env.IMAGE_BASE }}@${{ steps.build.outputs.digest }}"
+
+      # cosign v3.x stores via OCI 1.1 Referrers API for tools that support it.
+      - name: Install cosign v3 (OCI referrers)
+        if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@v4.1.2
+
       - name: Sign image (OCI referrers)
         if: github.event_name != 'pull_request'
         run: |
           cosign sign --yes \
-            --registry-referrers-mode=ocispec \
-            "${{ env.IMAGE_BASE }}@${{ steps.build.outputs.digest }}"
-
-      # Old: tag-based signature stored as sha256-<digest>.sig tag
-      - name: Sign image (legacy tag)
-        if: github.event_name != 'pull_request'
-        run: |
-          cosign sign --yes \
-            --registry-referrers-mode=legacy \
             "${{ env.IMAGE_BASE }}@${{ steps.build.outputs.digest }}"
 
       - name: Upload RPM artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.rpm }}
           path: ${{ matrix.rpm }}
@@ -94,7 +99,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Generate checksums
         run: |
@@ -103,7 +108,7 @@ jobs:
             > SHA256SUMS
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             chefdk-1.6.1-1.el6.x86_64.rpm
