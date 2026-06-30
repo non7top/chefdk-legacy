@@ -4,6 +4,8 @@ on:
   push:
     branches: [master]
     tags: ["v*"]
+  pull_request:
+    branches: [master]
   workflow_dispatch:
 
 env:
@@ -14,7 +16,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       packages: write
       id-token: write  # required for cosign keyless signing
 
@@ -35,6 +37,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -48,19 +51,21 @@ jobs:
           EL="el${{ matrix.el }}"
           echo "tags=${BASE}:${EL},${BASE}:1.6.1-${EL}" >> "$GITHUB_OUTPUT"
 
-      - name: Build and push
+      - name: Build (and push on merge)
         id: build
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ${{ matrix.dockerfile }}
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
 
       - name: Install cosign
+        if: github.event_name != 'pull_request'
         uses: sigstore/cosign-installer@v3
 
       - name: Sign image (keyless)
+        if: github.event_name != 'pull_request'
         run: |
           cosign sign --yes \
             "${{ env.IMAGE_BASE }}@${{ steps.build.outputs.digest }}"
