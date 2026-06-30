@@ -49,7 +49,12 @@ jobs:
         run: |
           BASE="${{ env.IMAGE_BASE }}"
           EL="el${{ matrix.el }}"
-          echo "tags=${BASE}:${EL},${BASE}:1.6.1-${EL}" >> "$GITHUB_OUTPUT"
+          SHA="${GITHUB_SHA::7}"
+          TAGS="${BASE}:${EL},${BASE}:1.6.1-${EL},${BASE}:${SHA}-${EL}"
+          if [ "${{ matrix.el }}" = "7" ]; then
+            TAGS="${TAGS},${BASE}:latest,${BASE}:${SHA}"
+          fi
+          echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
 
       - name: Build (and push on merge)
         id: build
