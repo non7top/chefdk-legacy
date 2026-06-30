@@ -1,0 +1,13 @@
+FROM centos:7
+
+# CentOS 7 is EOL; point yum at vault
+RUN sed -i 's/mirrorlist=/#mirrorlist=/g' /etc/yum.repos.d/CentOS-Base.repo && \
+    sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-Base.repo
+
+RUN yum -y update && yum clean all
+
+COPY chefdk-1.6.1-1.el7.x86_64.rpm /tmp/chefdk.rpm
+RUN rpm -ivh /tmp/chefdk.rpm && rm -f /tmp/chefdk.rpm
+
+ENV PATH="/opt/chefdk/bin:/opt/chefdk/embedded/bin:$PATH"
+CMD ["chef", "--version"]
