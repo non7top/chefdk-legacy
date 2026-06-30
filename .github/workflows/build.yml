@@ -50,9 +50,9 @@ jobs:
           BASE="${{ env.IMAGE_BASE }}"
           EL="el${{ matrix.el }}"
           SHA="${GITHUB_SHA::7}"
-          TAGS="${BASE}:${EL},${BASE}:1.6.1-${EL},${BASE}:${SHA}-${EL}"
+          TAGS="${BASE}:${EL},${BASE}:1.6.1-${EL},${BASE}:${EL}-${SHA}"
           if [ "${{ matrix.el }}" = "7" ]; then
-            TAGS="${TAGS},${BASE}:latest,${BASE}:${SHA}"
+            TAGS="${TAGS},${BASE}:latest"
           fi
           echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
 

@@ -8,15 +8,15 @@ Images are published to the GitHub Container Registry and signed with [Sigstore/
 
 | Tag | Base OS | Notes |
 |-----|---------|-------|
-| `latest`, `el7`, `1.6.1-el7`, `<sha>` | CentOS 7 | Recommended |
-| `el6`, `1.6.1-el6`, `<sha>-el6` | CentOS 6 | Legacy |
+| `latest`, `el7`, `1.6.1-el7`, `el7-<sha>` | CentOS 7 | Recommended |
+| `el6`, `1.6.1-el6`, `el6-<sha>` | CentOS 6 | Legacy |
 
 ```
 ghcr.io/non7top/chefdk:latest
 ghcr.io/non7top/chefdk:el7
 ghcr.io/non7top/chefdk:el6
-ghcr.io/non7top/chefdk:abc1234        # short git SHA (el7)
-ghcr.io/non7top/chefdk:abc1234-el6    # short git SHA (el6)
+ghcr.io/non7top/chefdk:el7-abc1234    # short git SHA (el7)
+ghcr.io/non7top/chefdk:el6-abc1234    # short git SHA (el6)
 ```
 
 ## Included versions
