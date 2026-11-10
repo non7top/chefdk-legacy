@@ -71,7 +71,7 @@ jobs:
       # other tools that don't yet discover OCI 1.1 referrers.
       - name: Install cosign v2 (legacy .sig tag)
         if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@v4.1.2
+        uses: sigstore/cosign-installer@v4.1.3
         with:
           cosign-release: v2.4.1
 
@@ -84,7 +84,7 @@ jobs:
       # cosign v3.x stores via OCI 1.1 Referrers API for tools that support it.
       - name: Install cosign v3 (OCI referrers)
         if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@v4.1.2
+        uses: sigstore/cosign-installer@v4.1.3
 
       - name: Sign image (OCI referrers)
         if: github.event_name != 'pull_request'
@@ -111,7 +111,7 @@ jobs:
                     chefdk-1.6.1-1.el7.x86_64.rpm > SHA256SUMS
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@v4.1.2
+        uses: sigstore/cosign-installer@v4.1.3
 
       - name: Sign RPMs and SHA256SUMS
         run: |
